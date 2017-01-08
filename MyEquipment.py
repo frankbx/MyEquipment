@@ -4,6 +4,7 @@ from flask import Flask, render_template
 from flask_bootstrap import Bootstrap
 from flask_script import Manager
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import check_password_hash, generate_password_hash
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
@@ -13,6 +14,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 manager = Manager(app)
 bootstrap = Bootstrap(app)
 db = SQLAlchemy(app)
+
 
 # Views
 @app.route('/')
@@ -43,6 +45,18 @@ class User(db.Model):
     first_name = db.Column(db.String(64), nullable=False)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     records = db.relationship('Record', backref='sso')
+    password_hash = db.Column(db.String(128))
+
+    @property
+    def password(self):
+        raise AttributeError('Password is not a readable attribute')
+
+    @password.setter
+    def password(self, pwd):
+        self.password_hash = generate_password_hash(pwd)
+
+    def verify_password(self, pwd):
+        return check_password_hash(self.password_hash, pwd)
 
 
 class Equipment(db.Model):
