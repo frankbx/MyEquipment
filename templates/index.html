@@ -1,1 +1,10 @@
 {% extends "base.html" %}
+{% block page_content %}
+    <div class="navbar-collapse collapse">
+        <ul class="nav navbar-nav">
+            <li><a href="/borrow_equipment">Borrow</a></li>
+            <li><a href="/return_equipment">Return</a></li>
+            <li><a href="/admin">Admin Only</a></li>
+        </ul>
+    </div>
+{% endblock %}
