@@ -9,7 +9,7 @@ from flask_wtf import FlaskForm
 from werkzeug.security import check_password_hash, generate_password_hash
 from wtforms import PasswordField, BooleanField, SubmitField, StringField
 from wtforms.validators import DataRequired, Length
-from flask_migrate import MigrateCommand,Migrate
+from flask_migrate import MigrateCommand, Migrate
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
@@ -77,6 +77,7 @@ class User(UserMixin, db.Model):
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     # records = db.relationship('Record', backref='sso')
     password_hash = db.Column(db.String(128))
+    is_admin = db.Column(db.Boolean, nullable=False, default=False)
 
     @property
     def password(self):
