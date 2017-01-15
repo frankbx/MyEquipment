@@ -55,7 +55,7 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(sso=form.sso.data).first()
         if user is not None and user.verify_password(form.pwd.data):
-            login_user(user, form.remember_me.data)
+            login_user(user)
             return redirect(request.args.get('Next') or url_for('index'))
     return render_template('login.html', form=form)
 
@@ -130,7 +130,7 @@ def load_user(sso):
 class LoginForm(FlaskForm):
     sso = StringField("SSO:", validators=[DataRequired(), Length(9, 9)])
     pwd = PasswordField("Password:", validators=[DataRequired()])
-    remember_me = BooleanField("Keep me logged in.")
+    # remember_me = BooleanField("Keep me logged in.")
     submit = SubmitField('Log In')
 
 
