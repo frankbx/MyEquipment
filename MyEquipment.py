@@ -7,8 +7,8 @@ from flask_script import Manager
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from werkzeug.security import check_password_hash, generate_password_hash
-from wtforms import PasswordField, BooleanField, SubmitField, StringField
-from wtforms.validators import DataRequired, Length
+from wtforms import PasswordField, BooleanField, SubmitField, StringField, ValidationError
+from wtforms.validators import DataRequired, Length, EqualTo
 from flask_migrate import MigrateCommand, Migrate
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -68,6 +68,18 @@ def logout():
     return redirect(url_for('index'))
 
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(sso=form.sso.data, last_name=form.last_name.data, first_name=form.first_name.data,
+                    password=form.password.data, is_active=True, is_admin=False)
+        db.session.add(user)
+        flash('You can now log in.')
+        return redirect(url_for('login'))
+    return render_template('register.html', form=form)
+
+
 # Models
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -89,6 +101,9 @@ class User(UserMixin, db.Model):
 
     def verify_password(self, pwd):
         return check_password_hash(self.password_hash, pwd)
+
+    def get_id(self):
+        return self.sso
 
 
 class Equipment(db.Model):
@@ -117,6 +132,22 @@ class LoginForm(FlaskForm):
     pwd = PasswordField("Password:", validators=[DataRequired()])
     remember_me = BooleanField("Keep me logged in.")
     submit = SubmitField('Log In')
+
+
+class RegistrationForm(FlaskForm):
+    sso = StringField("SSO:", validators=[DataRequired(), Length(9, 9)])
+    last_name = StringField('Last Name:', validators=[DataRequired()])
+    first_name = StringField('First Name:', validators=[DataRequired()])
+    password = PasswordField("Password:",
+                             validators=[DataRequired(), EqualTo('password2', message="Password must match.")])
+    password2 = PasswordField("Confirm Password:",
+                              validators=[DataRequired(), EqualTo('password', message="Password must match.")])
+
+    submit = SubmitField("Register")
+
+    def validate_sso(self, field):
+        if User.query.filter_by(sso=field.data).first():
+            raise ValidationError("SSO already registered.")
 
 
 if __name__ == '__main__':
