@@ -17,6 +17,7 @@ app.config['SECRET_KEY'] = '@b$p@th'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data.sqlite')
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+app.config['DEBUG'] = True
 manager = Manager(app)
 bootstrap = Bootstrap(app)
 db = SQLAlchemy(app)
@@ -109,6 +110,7 @@ class User(UserMixin, db.Model):
 class Equipment(db.Model):
     __tablename__ = 'equipments'
     id = db.Column(db.Integer, primary_key=True)
+    equipment_id = db.Column(db.String, nullable=True)
     name = db.Column(db.String, nullable=False)
     # records = db.relationship('Record', backref='equipment')
 
@@ -148,6 +150,10 @@ class RegistrationForm(FlaskForm):
     def validate_sso(self, field):
         if User.query.filter_by(sso=field.data).first():
             raise ValidationError("SSO already registered.")
+
+
+class EquipmentForm(FlaskForm):
+    name = StringField('Name:', validators=[DataRequired()])
 
 
 if __name__ == '__main__':
