@@ -8,8 +8,8 @@
                 <li><a href="/admin">Manage</a></li>
             {% endif %}
         </ul>
-        {% for equipment in equipments %}
-            <li>{{ equipment.equipment }}</li>
+        {% for record in records %}
+            <li>{{ record.equipment }}</li>
         {% endfor %}
     </div>
 {% endblock %}

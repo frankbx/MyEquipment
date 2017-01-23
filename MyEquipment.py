@@ -35,8 +35,8 @@ def index():
     user = current_user._get_current_object()
     if user is None:
         abort(404)
-    equipments = user.records.order_by(Record.equipment.desc()).all()
-    return render_template('index.html', equipments=equipments)
+    records = user.records.order_by(Record.equipment.desc()).all()
+    return render_template('index.html', records=records)
 
 
 @app.route('/borrow_equipment', methods=['GET', 'POST'])
@@ -130,7 +130,7 @@ class User(UserMixin, db.Model):
 
 
 class Equipment(db.Model):
-    __tablename__ = 'equipments'
+    __tablename__ = 'records'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     equipment_id = db.Column(db.String, nullable=True)
     name = db.Column(db.String, nullable=False)
@@ -147,7 +147,7 @@ class Record(db.Model):
     __tablename__ = 'records'
     id = db.Column(db.Integer, primary_key=True)
     user_sso = db.Column(db.Integer, db.ForeignKey('users.sso'))
-    equipment = db.Column(db.Integer, db.ForeignKey('equipments.id'))
+    equipment = db.Column(db.Integer, db.ForeignKey('records.id'))
     record_type = db.Column(db.String, nullable=False)
 
 
