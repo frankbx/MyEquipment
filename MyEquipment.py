@@ -1,15 +1,14 @@
 import os
 
-from flask import Flask, render_template, redirect, request, url_for, flash
+from flask import Flask, render_template, redirect, request, url_for, flash,abort
 from flask_bootstrap import Bootstrap
-from flask_login import UserMixin, LoginManager, login_required, login_user, logout_user
+from flask_login import UserMixin, LoginManager, login_required, login_user, logout_user,current_user
 from flask_migrate import MigrateCommand, Migrate
 from flask_script import Manager
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from werkzeug.security import check_password_hash, generate_password_hash
-from wtforms import PasswordField, SubmitField, StringField, ValidationError, TextAreaField, DateField, SelectField, \
-    IntegerField
+from wtforms import PasswordField, SubmitField, StringField, ValidationError, TextAreaField, DateField, SelectField
 from wtforms.validators import DataRequired, Length, EqualTo
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -31,8 +30,13 @@ login_manager.login_view = 'login'
 
 # Routes
 @app.route('/')
+@login_required
 def index():
-    return render_template('index.html')
+    user = current_user._get_current_object()
+    if user is None:
+        abort(404)
+    equipments = user.records.order_by(Record.equipment.desc()).all()
+    return render_template('index.html', equipments=equipments)
 
 
 @app.route('/borrow_equipment', methods=['GET', 'POST'])
@@ -106,7 +110,7 @@ class User(UserMixin, db.Model):
     last_name = db.Column(db.String(64), nullable=False)
     first_name = db.Column(db.String(64), nullable=False)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
-    # records = db.relationship('Record', backref='sso')
+    records = db.relationship('Record', backref='user')
     password_hash = db.Column(db.String(128))
     is_admin = db.Column(db.Boolean, nullable=True, default=False)
 
@@ -142,7 +146,7 @@ class Equipment(db.Model):
 class Record(db.Model):
     __tablename__ = 'records'
     id = db.Column(db.Integer, primary_key=True)
-    sso = db.Column(db.Integer, db.ForeignKey('users.sso'))
+    user_sso = db.Column(db.Integer, db.ForeignKey('users.sso'))
     equipment = db.Column(db.Integer, db.ForeignKey('equipments.id'))
     record_type = db.Column(db.String, nullable=False)
 

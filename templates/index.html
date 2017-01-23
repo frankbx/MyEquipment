@@ -4,7 +4,12 @@
         <ul class="nav navbar-nav">
             <li><a href="/borrow_equipment">Borrow</a></li>
             <li><a href="/return_equipment">Return</a></li>
-            <li><a href="/admin">Admin Only</a></li>
+            {% if current_user.is_admin %}
+                <li><a href="/admin">Manage</a></li>
+            {% endif %}
         </ul>
+        {% for equipment in equipments %}
+            <li>{{ equipment.equipment }}</li>
+        {% endfor %}
     </div>
 {% endblock %}
