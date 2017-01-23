@@ -3,13 +3,14 @@ import os
 from flask import Flask, render_template, redirect, request, url_for, flash
 from flask_bootstrap import Bootstrap
 from flask_login import UserMixin, LoginManager, login_required, login_user, logout_user
+from flask_migrate import MigrateCommand, Migrate
 from flask_script import Manager
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from werkzeug.security import check_password_hash, generate_password_hash
-from wtforms import PasswordField, BooleanField, SubmitField, StringField, ValidationError
+from wtforms import PasswordField, SubmitField, StringField, ValidationError, TextAreaField, DateField, SelectField, \
+    IntegerField
 from wtforms.validators import DataRequired, Length, EqualTo
-from flask_migrate import MigrateCommand, Migrate
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
@@ -35,11 +36,13 @@ def index():
 
 
 @app.route('/borrow_equipment', methods=['GET', 'POST'])
+@login_required
 def borrow():
     return render_template('borrow.html')
 
 
 @app.route('/return_equipment', methods=['GET', 'POST'])
+@login_required
 def return_equipment():
     return render_template('return.html')
 
@@ -81,6 +84,21 @@ def register():
     return render_template('register.html', form=form)
 
 
+@app.route('/new_equipment', methods=['GET', 'POST'])
+@login_required
+def create_equipment():
+    form = EquipmentForm()
+    if form.validate_on_submit():
+        equipment = Equipment(equipment_id=form.equipment_id.data, name=form.name.data, brand=form.brand.data,
+                              category=form.category.data, description=form.description.data,
+                              equipment_range=form.equipment_range.data, accuracy=form.accuracy.data,
+                              status=form.status.data, calibration_due=form.calibration_due.data)
+        db.session.add(equipment)
+        flash("Equipment has been created successfully.")
+        return redirect(url_for('index'))
+    return render_template('new_equipment.html', form=form)
+
+
 # Models
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -90,7 +108,7 @@ class User(UserMixin, db.Model):
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     # records = db.relationship('Record', backref='sso')
     password_hash = db.Column(db.String(128))
-    is_admin = db.Column(db.Boolean, nullable=False, default=False)
+    is_admin = db.Column(db.Boolean, nullable=True, default=False)
 
     @property
     def password(self):
@@ -109,10 +127,16 @@ class User(UserMixin, db.Model):
 
 class Equipment(db.Model):
     __tablename__ = 'equipments'
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     equipment_id = db.Column(db.String, nullable=True)
     name = db.Column(db.String, nullable=False)
-    # records = db.relationship('Record', backref='equipment')
+    brand = db.Column(db.String(64))
+    category = db.Column(db.String)
+    description = db.Column(db.Text)
+    equipment_range = db.Column(db.String)
+    accuracy = db.Column(db.String)
+    status = db.Column(db.String)
+    calibration_due = db.Column(db.Date)
 
 
 class Record(db.Model):
@@ -153,7 +177,20 @@ class RegistrationForm(FlaskForm):
 
 
 class EquipmentForm(FlaskForm):
+    # id = IntegerField('ID:')
+    equipment_id = StringField('Equipment ID:', validators=[DataRequired()])
     name = StringField('Name:', validators=[DataRequired()])
+    brand = StringField('Brand:', validators=[DataRequired()])
+    category = StringField('Category:', validators=[DataRequired()])
+    description = TextAreaField('Description:')
+    equipment_range = StringField("Range:")
+    accuracy = StringField("Accuracy:")
+    status = SelectField("Status:", validators=[DataRequired()],
+                         choices=[('Available', 'Available'), ('In Use', 'In Use'),
+                                  ('In Calibration', 'In Calibration'),
+                                  ('Stop Use', 'Stop Use')])
+    calibration_due = DateField("Calibration Due Date:")
+    submit = SubmitField("Save")
 
 
 if __name__ == '__main__':
